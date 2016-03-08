@@ -14,6 +14,7 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
             'imageSetId': 1,
             'identification': 1,
             'name': 1,
+            'rating':1,
             'brand': 1,
             'registrationStart': 1,
             'registrationDeadline': 1,
