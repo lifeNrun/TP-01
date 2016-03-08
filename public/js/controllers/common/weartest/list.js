@@ -76,7 +76,11 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
 
             return;
         }
-
+        for(i = 0; i < allWeartestsLength;++i){
+            if($scope.shownWeartests[i].rating < 0){
+                $scope.shownWeartests[i].rating = 10;
+            }
+        }
         for (i = 0; i < allWeartestsLength; i++) {
             weartestIsShown = false;
 
@@ -86,6 +90,7 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
 
                     break;
                 }
+
             }
 
             if (!weartestIsShown) {
