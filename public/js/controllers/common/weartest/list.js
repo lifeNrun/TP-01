@@ -1,7 +1,7 @@
 dashboardApp.controller('WeartestListCtrl', ['$scope', '$location', '$http', 'WTServices', 'async', 'notificationWindow',
 function ($scope, $location, $http, WTServices, async, notificationWindow) {
     'use strict';
-
+    var weartestId = 0;
     notificationWindow.show('Retrieving all product tests...', true);
 
     var path = $location.path(),
@@ -48,7 +48,7 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
     $scope.loadingInitialCircles = true;
     
     $scope.alwaysHide = true;
-
+	
     $scope.loadingAllWeartests = true;
 
     orderWeartestsBy[$scope.predicate] = -1;
@@ -61,9 +61,17 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
         keyboard: false,
         backdropClick: false
     };
-
+	$scope.weartestRating = 0;
     $scope.weartestToDelete = {};
-
+    $scope.weartest = {};
+    var getWeartestRating = function () {
+        $http.get('/api/misc/weartest/' + weartestId + '/ratings')
+            .success(function (result) {
+                if (angular.isObject(result)) {
+                    $scope.weartestRating = result.rating;
+                }
+            });
+    };
     var adjustShownWeartests = function () {
         var allWeartestsLength = allWeartests.length,
             notShownWeartests = [],
@@ -76,11 +84,7 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
 
             return;
         }
-        for(i = 0; i < allWeartestsLength;++i){
-            if($scope.shownWeartests[i].rating < 0){
-                $scope.shownWeartests[i].rating = 10;
-            }
-        }
+
         for (i = 0; i < allWeartestsLength; i++) {
             weartestIsShown = false;
 
@@ -94,6 +98,17 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
             }
 
             if (!weartestIsShown) {
+				$scope.weartest = allWeartests[i];
+                weartestId = allWeartests[i]._id;
+				if ($scope.weartest.automaticRating) {
+					getWeartestRating();
+				} else {
+					$scope.weartestRating = $scope.weartest.rating;
+				}
+				if(allWeartests[i].rating < 0){
+                    //getWeartestRating();
+                    allWeartests[i].rating =  $scope.weartestRating;//$scope.weartestRating;//$scope.weartestRating;//getWeartestRating(allWeartests[i]._id);//10;//getWeartestRating
+                }
                 notShownWeartests.push(allWeartests[i]);
             }
         }
@@ -102,6 +117,7 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
 
         $scope.loadingAllWeartests = false;
     };
+	//Get the rating for the weartest
 
     var getWeartestRecords = function (query, limit) {
         var path = '/api/mesh01/weartest',
@@ -120,7 +136,7 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
         path += '&projection=' + JSON.stringify(weartestProjection);
 
         path += '&orderBy=' + JSON.stringify(orderWeartestsBy);
-
+        //console.log("path = "+path);
         if (limit !== 0) {
             getWeartestRecords(query);
             if ($scope.loadingInitialWeartests) {
