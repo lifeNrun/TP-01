@@ -21,7 +21,8 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
             'wearTestStartDate': 1,
             'wearTestEndDate': 1,
             'productType': 1,
-            'activity': 1
+            'activity': 1,
+            'automaticRating': 1
         },
         allWeartests = [],
         orderWeartestsBy = {},
@@ -61,20 +62,23 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
         keyboard: false,
         backdropClick: false
     };
-	$scope.weartestRating = 0;
+	$scope.weartestRating = 1;
     $scope.weartestToDelete = {};
     $scope.weartest = {};
+
     var getWeartestRating = function () {
-        $http.get('/api/misc/weartest/' + weartestId + '/ratings')
-            .success(function (result) {
-                if (angular.isObject(result)) {
-                    $scope.weartestRating = result.rating;
-                }
-            });
+         $http.get('/api/misc/weartest/' +  $scope.weartest._id + '/ratings')
+         .success(function (result) {
+                 if (angular.isObject(result)) {
+                     $scope.weartest.rating = result.rating;;// result.rating;
+                     console.log("After change In getWeartestRating id = "+$scope.weartest._id+" rating = "+$scope.weartest.rating);
+                     $scope.shownWeartests.push($scope.weartest);
+                     $scope.loadingAllWeartests = false;
+                 }
+             });
     };
     var adjustShownWeartests = function () {
         var allWeartestsLength = allWeartests.length,
-            notShownWeartests = [],
             weartestIsShown,
             i,
             j;
@@ -98,16 +102,15 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
             }
 
             if (!weartestIsShown) {
-				$scope.weartest = allWeartests[i];
-                weartestId = allWeartests[i]._id;
-				if ($scope.weartest.automaticRating) {
-					getWeartestRating();
-				} else {
-					$scope.weartestRating = $scope.weartest.rating;
+				if (!allWeartests[i].automaticRating) {
+                    console.log("adjustShownWeartests");
+                    //notShownWeartests.push(allWeartests[i]);
+                    $scope.shownWeartests.push(allWeartests[i]);
+                    $scope.loadingAllWeartests = false;
 				}
-				if(allWeartests[i].rating < 0){
-                    //getWeartestRating();
-                    allWeartests[i].rating =  $scope.weartestRating;//$scope.weartestRating;//$scope.weartestRating;//getWeartestRating(allWeartests[i]._id);//10;//getWeartestRating
+                else{
+                    $scope.weartest = allWeartests[i];
+                    getWeartestRating();
                 }
                 notShownWeartests.push(allWeartests[i]);
             }
@@ -156,10 +159,11 @@ function ($scope, $location, $http, WTServices, async, notificationWindow) {
                             notificationWindow.show('Loading Complete', false);
                         } else if (result.length > allWeartests.length) {
                             allWeartests = result.slice(0);
+                            adjustShownWeartests();
+                            console.log("loadingInitialWeartests false");
+                            //$scope.shownWeartests = result.slice(0);
 
-                            $scope.shownWeartests = result.slice(0);
-
-                            $scope.loadingInitialWeartests = false;
+                           // $scope.loadingInitialWeartests = false;
                         } else {
                             $scope.loadingInitialWeartests = false;
                         }
